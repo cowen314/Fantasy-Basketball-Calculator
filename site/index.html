@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Values</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Player Values</h1>
+  <p id="meta" class="muted">Loading…</p>
+</header>
+
+<section class="controls">
+  <input id="search" type="search" placeholder="Search player" autocomplete="off">
+  <select id="team"><option value="">All teams</option></select>
+  <select id="pos">
+    <option value="">All positions</option>
+    <option>PG</option><option>SG</option><option>SF</option><option>PF</option><option>C</option>
+  </select>
+  <label class="field">Min G <input id="minG" type="number" min="0" value="0"></label>
+  <label class="check"><input id="hidePool" type="checkbox"> Hide likely rostered</label>
+  <label class="field">Categories for
+    <select id="detail"></select>
+  </label>
+</section>
+
+<div class="table-wrap">
+  <table id="tbl">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+</div>
+<p id="count" class="muted small"></p>
+
+<details class="notes">
+  <summary>How values are calculated</summary>
+  <ul>
+    <li><b>z-score</b> per category = (per-game stat − pool mean) ÷ pool SD. FG% and FT% use impact = attempts × (player% − pool%). TO is negated.</li>
+    <li><b>Value</b> = sum of category z-scores, per game. <b>Total</b> = value × games played in the window.</li>
+    <li>The <b>pool</b> approximates rostered players: the top teams × roster spots by value, found by iterating until stable. Only players with enough games count toward it.</li>
+    <li>The last-7-days window uses the season-to-date mean and SD, so its z-scores read as "playing at this level lately".</li>
+    <li>A dot marks players in the season-to-date pool. Players below the minimum games don't count toward it, so the pool can leave out stars who have missed time.</li>
+    <li>"Hide likely rostered" hides pool players and anyone in the top N by per-game value this season or last season. What's left are the likelier waiver candidates. It's an estimate, not your league's actual rosters.</li>
+    <li>Click a row for per-game stats. Data: basketball-reference.com.</li>
+  </ul>
+</details>
+
+<script src="app.js"></script>
+</body>
+</html>
