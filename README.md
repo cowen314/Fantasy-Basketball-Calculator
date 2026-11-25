@@ -31,7 +31,7 @@ python -m pytest tests
 
 ## Hosting (GitHub Pages)
 
-`.github/workflows/update.yml` rebuilds the data daily at 11:17 UTC, on every push to `main`, and on demand. It then deploys `site/` to GitHub Pages. One-time setup: **Settings → Pages → Source: GitHub Actions**.
+`.github/workflows/update.yml` rebuilds the data daily at 11:17 UTC, on every push, and on demand. Runs on `main` then deploy `site/` to GitHub Pages; pushes to other branches only build and test. One-time setup: **Settings → Pages → Source: GitHub Actions**.
 
 If basketball-reference ever blocks GitHub's runners, add a repository secret `HTTPS_PROXY` (e.g. `http://user:pass@host:port`) and the build will route through it.
 

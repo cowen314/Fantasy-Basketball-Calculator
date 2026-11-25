@@ -1,7 +1,17 @@
 {
-  "teams": 12,
-  "roster_spots": 13,
-  "categories": ["FG%", "FT%", "3PM", "PTS", "REB", "AST", "STL", "BLK", "TO"],
+  "teams": 10,
+  "roster_spots": 14,
+  "categories": [
+    "FG%",
+    "FT%",
+    "3PM",
+    "PTS",
+    "REB",
+    "AST",
+    "STL",
+    "BLK",
+    "TO"
+  ],
   "min_games_fraction": 0.25,
   "recent_days": 7,
   "static_season": 2026

@@ -5,8 +5,8 @@ on:
     # Daily at 11:17 UTC (6-7am US Eastern), after the night's games are final.
     - cron: "17 11 * * *"
   workflow_dispatch:
+  # Every push to any branch rebuilds and tests; only main deploys (below).
   push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -40,6 +40,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
