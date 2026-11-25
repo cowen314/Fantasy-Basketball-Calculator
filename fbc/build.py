@@ -176,7 +176,7 @@ def main(argv=None):
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "players.json").write_text(
-        json.dumps({"meta": meta, "players": players}, separators=(",", ":"), ensure_ascii=False))
+        json.dumps({"meta": meta, "players": players}, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
 
     # Flat CSV: one row per player, columns per window.
     flat = []
@@ -192,7 +192,7 @@ def main(argv=None):
             r[f"{key}_total"] = w["total"] if w else None
         flat.append(r)
     pd.DataFrame(flat).sort_values("season_value", ascending=False).to_csv(
-        OUT_DIR / "players.csv", index=False)
+        OUT_DIR / "players.csv", index=False, encoding="utf-8")
     print(f"Wrote {len(players)} players to {OUT_DIR}")
 
 
