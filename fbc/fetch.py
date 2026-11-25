@@ -55,7 +55,9 @@ def _get(url: str, cache_dir: Path | None = None, cache_key: str | None = None) 
             if attempt == 3:
                 raise
             time.sleep(10 * (attempt + 1))
-    html = resp.text
+    # basketball-reference sends no charset header, so requests would guess
+    # ISO-8859-1 and garble accented names (Jokić -> JokiÄ). Pages are UTF-8.
+    html = resp.content.decode("utf-8", errors="replace")
     if cache_dir and cache_key:
         cache_dir.mkdir(parents=True, exist_ok=True)
         (cache_dir / cache_key).write_text(html, encoding="utf-8")
