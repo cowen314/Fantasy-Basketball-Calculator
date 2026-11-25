@@ -1,5 +1,7 @@
 # Fantasy Basketball Calculator
 
+**Live page: https://cowen314.github.io/Fantasy-Basketball-Calculator/** (updated daily)
+
 Daily z-score values for every NBA player in a head-to-head categories league, for quick waiver-wire lookups. The page shows three windows side by side: season to date, last 7 days, and the 2025-26 season. Each window has its per-category z-scores.
 
 ## How it works
