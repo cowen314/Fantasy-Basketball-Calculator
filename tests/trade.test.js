@@ -2,7 +2,7 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { teamTotals, tradeDelta, categoryWeights, suggest } = require("../site/trade.js");
+const { valueOf, teamTotals, tradeDelta, categoryWeights, suggest } = require("../site/trade.js");
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`);
 const closeAll = (a, b) => { assert.equal(a.length, b.length); a.forEach((v, i) => close(v, b[i])); };
@@ -59,4 +59,44 @@ test("suggest caps ideas per outgoing player", () => {
   const cands = [P("a", [0, 1.5]), P("b", [0, 1.4]), P("c", [0, 1.3])];
   const s = suggest(mine, cands, "season", { weights: [0.25, 1.75], perPlayer: 2 });
   assert.deepEqual(s.map((x) => x.give.id + ">" + x.get.id), ["m2>a", "m1>a", "m2>b", "m1>b"]);
+});
+
+// ---- Punting ----
+const ACT = [true, false, true];   // punt category 1
+
+test("valueOf skips punted categories and nulls", () => {
+  close(valueOf([1, 5, null], ACT), 1);
+  close(valueOf([1, 5, 2]), 8);
+});
+
+test("teamTotals keeps punted z totals but leaves them out of value", () => {
+  const t = teamTotals([P("a", [1, 2, -1]), P("b", [0.5, 3, 1])], "season", 3, ACT);
+  closeAll(t.z, [1.5, 5, 0]);
+  close(t.value, 1.5);
+});
+
+test("tradeDelta value ignores punted categories", () => {
+  const d = tradeDelta([P("a", [1, 3, 1])], [P("b", [2, 0, 1])], "season", 3, ACT);
+  closeAll(d.z, [1, -3, 0]);
+  close(d.value, 1);
+});
+
+test("categoryWeights gives punted categories 0 and rescales the rest", () => {
+  // Category 1 is by far the weakest but punted, so it doesn't stretch the spread.
+  closeAll(categoryWeights([-2, -10, 2], ACT), [1.75, 0, 0.25]);
+  closeAll(categoryWeights([3, -10, 3], ACT), [1, 0, 1]);
+  closeAll(categoryWeights([1, 2], [false, false]), [0, 0]);
+});
+
+test("suggest with a punted category: gain ignores it, fairness uses full value", () => {
+  const mine = [P("m", [1, 2, 0])];                        // full value 3
+  const cands = [
+    P("shooter", [0, 3, 0]),                               // only helps the punted cat
+    P("fair", [1, -1, 3]),                                 // full value 3, gives up punted cat
+    P("cheap_by_my_count", [1, -6, 2]),                    // full value -3: unfair to them
+  ];
+  const s = suggest(mine, cands, "season", { tolerance: 1, weights: [1, 0, 1] });
+  assert.deepEqual(s.map((x) => x.get.id), ["fair"]);
+  close(s[0].gain, 3);
+  close(s[0].valueDiff, 0);
 });

@@ -33,6 +33,7 @@ On the page:
 - **My team** sums each category's per-game z-scores across the active roster (IL players left out) for each window, which shows the team's strengths and weaknesses.
 - **Trade**: click ⇄ on any rows to build a trade (yours go on the give side, others on the get side). It shows the change to each category and to total value, per window.
 - **Trade ideas** lists 1-for-1 swaps where the two players' values are within a set gap and the weighted category gain is positive. Categories are weighted by how weak your team is in them (weakest 1.75×, strongest 0.25×). Targets are "likely rostered" players by default, or everyone.
+- **Punt** (under the page title): tick a category to drop it. Value, total, rank, team value and trade ideas then ignore it (weight 0), and its columns are dimmed. The z-scores and baseline pool stay the same, since the pool stands in for the league's rosters and the other managers aren't punting. For the same reason, the trade-idea value gap (fairness to the other manager) still uses every category. The choice is saved in your browser.
 
 ## Data source
 
@@ -58,4 +59,4 @@ If basketball-reference ever blocks GitHub's runners, add a repository secret `H
 
 ## Not yet built
 
-Live Yahoo rosters (trade targets are estimated for now), punting categories, H2H matchup tuning, and schedule / playoff-week games.
+Live Yahoo rosters (trade targets are estimated for now), H2H matchup tuning, and schedule / playoff-week games.

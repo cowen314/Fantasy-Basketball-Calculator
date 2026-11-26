@@ -1,7 +1,7 @@
 "use strict";
 
 const $ = (id) => document.getElementById(id);
-const state = { sort: "season.value", dir: -1, open: new Set(), give: [], get: [] };
+const state = { sort: "season.value", dir: -1, open: new Set(), give: [], get: [], punt: new Set() };
 let DATA = null;
 let BY_ID = new Map();
 const store = {
@@ -25,6 +25,10 @@ function getVal(p, key) {
   const win = p[w];
   if (!win) return null;
   if (field === "z") return win.z[+idx];
+  // Value, total and rank are re-scored without punted categories.
+  if (field === "value") return win.pv;
+  if (field === "total") return win.pt;
+  if (field === "rank") return win.pr;
   return win[field];
 }
 
@@ -48,6 +52,55 @@ function computeScales() {
   }
 }
 
+// ---- Punting ----
+
+// One boolean per category: false = punted, left out of value.
+const active = () => DATA.meta.categories.map((_, i) => !state.punt.has(i));
+const puntedNames = () => DATA.meta.categories.filter((_, i) => state.punt.has(i));
+
+// Re-score every player's value, total and rank in each window over the
+// active categories. The z-scores and baseline pool don't change: the pool
+// stands in for the league's rosters, and the other managers aren't punting.
+function applyPunts() {
+  const act = active();
+  const none = !state.punt.size;
+  for (const w of DATA.meta.windows) {
+    const recs = [];
+    for (const p of DATA.players) {
+      const win = p[w.key];
+      if (!win) continue;
+      if (none) {
+        win.pv = win.value; win.pt = win.total; win.pr = win.rank;
+        continue;
+      }
+      win.pv = Math.round(Trade.valueOf(win.z, act) * 100) / 100;
+      win.pt = Math.round(win.pv * win.g * 10) / 10;
+      recs.push(win);
+    }
+    recs.sort((a, b) => b.pv - a.pv);
+    recs.forEach((win, i) => { win.pr = i && win.pv === recs[i - 1].pv ? recs[i - 1].pr : i + 1; });
+  }
+}
+
+function savePunts() {
+  store.set("fbc.punt", puntedNames());
+}
+
+function renderPunts() {
+  $("punts").innerHTML = DATA.meta.categories.map((c, i) =>
+    `<label class="punt${state.punt.has(i) ? " on" : ""}" title="Punt ${c}: leave it out of value and trade ideas">` +
+    `<input type="checkbox" data-cat="${i}"${state.punt.has(i) ? " checked" : ""}> ${c}</label>`).join("");
+}
+
+function metaLine() {
+  const m = DATA.meta;
+  const p = puntedNames();
+  $("meta").textContent =
+    `${m.config.teams} teams × ${m.config.roster_spots} spots · ${m.categories.length} categories` +
+    (p.length ? ` (punting ${p.join(", ")})` : "") + ` · ` +
+    `last 7 days = ${m.recent_range[0]} to ${m.recent_range[1]} · updated ${new Date(m.updated).toLocaleString()}`;
+}
+
 function columns() {
   const cats = DATA.meta.categories;
   const d = $("detail").value;
@@ -57,7 +110,7 @@ function columns() {
     cols.push({ key: `${w.key}.value`, label: "Value", group: w.key, shade: true, strong: true });
     cols.push({ key: `${w.key}.total`, label: "Total", group: w.key, shade: true, digits: 0 });
   }
-  cats.forEach((c, i) => cols.push({ key: `${d}.z.${i}`, label: c, group: "cats", first: i === 0, shade: true }));
+  cats.forEach((c, i) => cols.push({ key: `${d}.z.${i}`, label: c, group: "cats", first: i === 0, shade: true, punted: state.punt.has(i) }));
   return cols;
 }
 
@@ -72,7 +125,8 @@ function renderHead() {
   $("tbl").tHead.innerHTML =
     `<tr><th class="player group"></th>${groups.map((g) => `<th class="group sep" colspan="${g.n}">${g.label}</th>`).join("")}</tr>` +
     `<tr><th class="player${sortCls("name")}" data-key="name">Player${arrow("name")}</th>` +
-    cols.map((c) => `<th class="${c.first ? "sep" : ""}${sortCls(c.key)}" data-key="${c.key}">${c.label}${arrow(c.key)}</th>`).join("") +
+    cols.map((c) => `<th class="${c.first ? "sep" : ""}${c.punted ? " punted" : ""}${sortCls(c.key)}" data-key="${c.key}"` +
+      `${c.punted ? ' title="Punted: not counted in value"' : ""}>${c.label}${arrow(c.key)}</th>`).join("") +
     `</tr>`;
 }
 
@@ -117,7 +171,7 @@ function statLine(p) {
     const pct = (m, a) => (a ? (m / a).toFixed(3).replace(/^0/, "") : "–");
     return `<b>${w.label}</b><span>${win.g} G · ${v.pts.toFixed(1)} pts · ${v.reb.toFixed(1)} reb · ${v.ast.toFixed(1)} ast · ` +
       `${v.stl.toFixed(1)} stl · ${v.blk.toFixed(1)} blk · ${v.fg3m.toFixed(1)} 3pm · ${v.tov.toFixed(1)} to · ` +
-      `FG ${pct(v.fgm, v.fga)} on ${v.fga.toFixed(1)} · FT ${pct(v.ftm, v.fta)} on ${v.fta.toFixed(1)} · rank #${win.rank}</span>`;
+      `FG ${pct(v.fgm, v.fga)} on ${v.fga.toFixed(1)} · FT ${pct(v.ftm, v.fta)} on ${v.fta.toFixed(1)} · rank #${win.pr}</span>`;
   });
   return `<div class="statline">${lines.join("")}</div>`;
 }
@@ -136,7 +190,7 @@ function renderBody() {
       `<span class="sub">${p.team}${p.pos ? " · " + p.pos : ""}</span>${inPool ? '<span class="dot" title="In the season-to-date baseline pool"></span>' : ""}</td>`);
     for (const c of cols) {
       const v = getVal(p, c.key);
-      const cls = [c.first ? "sep" : "", v === null ? "na" : "", c.strong ? "strong" : ""].join(" ").trim();
+      const cls = [c.first ? "sep" : "", v === null ? "na" : "", c.strong ? "strong" : "", c.punted ? "punted" : ""].join(" ").trim();
       const style = c.shade ? shade(v, SCALES[c.key]) : "";
       html.push(`<td class="${cls}" style="${style}">${fmt(v, c.digits ?? 2)}</td>`);
     }
@@ -166,12 +220,15 @@ function totalsScale(values) {
   return Math.max(...values.map((v) => Math.abs(v ?? 0)), 0.01);
 }
 
+const puntCls = (i) => (state.punt.has(i) ? ' class="punted"' : "");
+
 function catCells(values, scale, digits = 2, sign = false) {
-  return values.map((v) => `<td style="${shade(v, scale)}">${sign ? signed(v, digits) : fmt(v, digits)}</td>`).join("");
+  return values.map((v, i) => `<td${puntCls(i)} style="${shade(v, scale)}">${sign ? signed(v, digits) : fmt(v, digits)}</td>`).join("");
 }
 
-function headRow(first, extra = []) {
-  return `<tr><th>${first}</th>${cats().map((c) => `<th>${c}</th>`).join("")}<th>Value</th>${extra.map((e) => `<th>${e}</th>`).join("")}</tr>`;
+function headRow(first, extra = [], valueLabel = "Value") {
+  return `<tr><th>${first}</th>${cats().map((c, i) => `<th${puntCls(i)}>${c}</th>`).join("")}` +
+    `<th>${valueLabel}</th>${extra.map((e) => `<th>${e}</th>`).join("")}</tr>`;
 }
 
 function renderTeam() {
@@ -186,8 +243,8 @@ function renderTeam() {
   $("team-warn").hidden = !team.unmatched.length;
   $("team-warn").textContent = team.unmatched.length ? `Couldn't match: ${team.unmatched.join("; ")}` : "";
   const rows = DATA.meta.windows.map((w) => {
-    const t = Trade.teamTotals(mine, w.key, cats().length);
-    const scale = totalsScale(t.z);
+    const t = Trade.teamTotals(mine, w.key, cats().length, active());
+    const scale = totalsScale(t.z.filter((_, i) => !state.punt.has(i)));
     return `<tr><td>${w.label} <span class="muted">(${t.count} with games)</span></td>` +
       catCells(t.z, scale, 1) + `<td class="strong">${fmt(t.value, 1)}</td></tr>`;
   });
@@ -195,7 +252,7 @@ function renderTeam() {
 }
 
 function chip(p, side) {
-  const v = p.season ? fmt(p.season.value) : "–";
+  const v = p.season ? fmt(p.season.pv) : "–";
   return `<span class="chip">${p.mine ? '<span class="star">★</span>' : ""}${esc(p.name)}${p.il ? ' <span class="il">IL</span>' : ""} <span class="v">${v}</span>` +
     `<button type="button" data-remove="${p.id}" data-side="${side}" title="Remove">×</button></span>`;
 }
@@ -211,23 +268,24 @@ function renderTrade() {
   if (!give.length && !get.length) return;
 
   const n = cats().length;
+  const act = active();
   const mine = myActive();
   const hasTeam = mine.length > 0;
   // After the trade: active players I keep, plus everyone I get.
   const kept = mine.filter((p) => !state.give.includes(p.id));
   const rows = [];
   for (const w of DATA.meta.windows) {
-    const d = Trade.tradeDelta(give, get, w.key, n);
+    const d = Trade.tradeDelta(give, get, w.key, n, act);
     const scale = Math.max(totalsScale(d.z), 1);
     rows.push(`<tr class="total"><td>${w.label}: change</td>${catCells(d.z, scale, 2, true)}` +
       `<td style="${shade(d.value, scale)}">${signed(d.value)}</td></tr>`);
     if (hasTeam) {
-      const before = Trade.teamTotals(mine, w.key, n);
-      const afterT = Trade.teamTotals([...kept, ...get], w.key, n);
+      const before = Trade.teamTotals(mine, w.key, n, act);
+      const afterT = Trade.teamTotals([...kept, ...get], w.key, n, act);
       const after = afterT.z;
       const s2 = totalsScale([...before.z, ...after]);
       rows.push(`<tr><td class="muted">&nbsp;&nbsp;team before → after</td>` +
-        before.z.map((v, i) => `<td class="muted">${fmt(v, 1)} → <span style="${shade(after[i], s2)}">${fmt(after[i], 1)}</span></td>`).join("") +
+        before.z.map((v, i) => `<td class="muted${state.punt.has(i) ? " punted" : ""}">${fmt(v, 1)} → <span style="${shade(after[i], s2)}">${fmt(after[i], 1)}</span></td>`).join("") +
         `<td class="muted">${fmt(before.value, 1)} → ${fmt(afterT.value, 1)}</td></tr>`);
     }
   }
@@ -239,10 +297,10 @@ function renderSuggestions() {
   const win = $("sg-window").value;
   const n = cats().length;
   const mine = myPlayers();
-  const totals = Trade.teamTotals(myActive(), win, n);
-  const weights = Trade.categoryWeights(totals.z);
+  const totals = Trade.teamTotals(myActive(), win, n, active());
+  const weights = Trade.categoryWeights(totals.z, active());
   $("sg-weights").textContent = "Category weights: " +
-    cats().map((c, i) => `${c} ${weights[i].toFixed(2)}×`).join(" · ");
+    cats().map((c, i) => (state.punt.has(i) ? `${c} punted` : `${c} ${weights[i].toFixed(2)}×`)).join(" · ");
 
   // Skip tiny samples: need a quarter of the window's most games played.
   const maxG = Math.max(...DATA.players.map((p) => (p[win] ? p[win].g : 0)));
@@ -262,7 +320,8 @@ function renderSuggestions() {
     catCells(x.delta, scale, 2, true) +
     `<td>${signed(x.valueDiff)}</td><td class="strong">${fmt(x.gain)}</td>` +
     `<td><button type="button" data-try="${x.give.id}|${x.get.id}">Try</button></td></tr>`);
-  $("sg-tbl").innerHTML = `<thead>${headRow("Give → get", ["Weighted gain", ""])}</thead><tbody>${rows.join("")}</tbody>`;
+  const gapLabel = state.punt.size ? '<span title="Uses all categories: the other manager isn\'t punting">Value gap*</span>' : "Value gap";
+  $("sg-tbl").innerHTML = `<thead>${headRow("Give → get", ["Weighted gain", ""], gapLabel)}</thead><tbody>${rows.join("")}</tbody>`;
 }
 
 function saveTrade() {
@@ -291,12 +350,15 @@ function init(data) {
     state.give = (saved.give || []).filter((id) => BY_ID.get(id)?.mine);
     state.get = (saved.get || []).filter((id) => BY_ID.has(id) && !BY_ID.get(id).mine);
   }
+  // Punted categories are saved by name, so they survive a category reorder.
+  const savedPunt = store.get("fbc.punt");
+  if (Array.isArray(savedPunt)) {
+    state.punt = new Set(m.categories.map((c, i) => (savedPunt.includes(c) ? i : -1)).filter((i) => i >= 0));
+  }
+  applyPunts();
   computeScales();
-  const n = m.config.teams * m.config.roster_spots;
-  const updated = new Date(m.updated);
-  $("meta").textContent =
-    `${m.config.teams} teams × ${m.config.roster_spots} spots · ${m.categories.length} categories · ` +
-    `last 7 days = ${m.recent_range[0]} to ${m.recent_range[1]} · updated ${updated.toLocaleString()}`;
+  metaLine();
+  renderPunts();
   $("detail").innerHTML = m.windows.map((w) => `<option value="${w.key}">${w.label}</option>`).join("");
   $("sg-window").innerHTML = $("detail").innerHTML;
   const teams = [...new Set(data.players.map((p) => p.team))].filter((t) => t && !/^\dTM$/.test(t)).sort();
@@ -304,6 +366,21 @@ function init(data) {
 
   for (const id of ["search", "team", "pos", "minG", "hidePool", "onlyMine"]) $(id).addEventListener("input", renderBody);
   for (const id of ["sg-window", "sg-targets", "sg-tol"]) $(id).addEventListener("input", renderSuggestions);
+  $("punts").addEventListener("change", (e) => {
+    const i = +e.target.dataset.cat;
+    if (Number.isNaN(i)) return;
+    if (e.target.checked && state.punt.size >= m.categories.length - 1) {
+      e.target.checked = false;   // keep at least one category
+      return;
+    }
+    e.target.checked ? state.punt.add(i) : state.punt.delete(i);
+    savePunts();
+    applyPunts();
+    computeScales();
+    metaLine();
+    renderPunts();
+    renderTeam(); renderTrade(); renderSuggestions(); render();
+  });
   $("trade-clear").addEventListener("click", () => {
     state.give = []; state.get = [];
     saveTrade(); renderTrade(); renderBody();

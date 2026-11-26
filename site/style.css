@@ -137,3 +137,14 @@ td.player .tr-btn.on { background: var(--accent); border-color: var(--accent); c
 [hidden] { display: none !important; }
 #sg-tol { width: 70px; }
 .il { display: inline-block; margin-left: 5px; padding: 0 4px; border-radius: 3px; font-size: 10px; font-weight: 600; line-height: 15px; color: rgb(var(--neg)); border: 1px solid rgba(var(--neg), 0.5); vertical-align: 1px; }
+
+/* Punting */
+.punt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; }
+.punts { display: flex; flex-wrap: wrap; gap: 6px; }
+label.punt {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px 2px 6px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); cursor: pointer;
+}
+label.punt input { margin: 0; }
+label.punt.on { color: rgb(var(--neg)); border-color: rgba(var(--neg), 0.5); text-decoration: line-through; }
+th.punted, td.punted { opacity: 0.4; }
