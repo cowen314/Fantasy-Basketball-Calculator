@@ -1,5 +1,8 @@
 """Match my fantasy roster (hardcoded in my_team.json) to basketball-reference players.
 
+my_team.json has "players" (active roster) and "il" (injured list). IL players
+are on my team but left out of team totals.
+
 Each roster entry is a player name ("Luka Doncic") or a basketball-reference
 player id ("doncilu01"). Ids are useful when two players share a name.
 """
@@ -27,10 +30,11 @@ def normalize(name: str) -> str:
 def load(path: Path) -> dict:
     """Read my_team.json. A missing file means no team."""
     if not path.exists():
-        return {"name": "My team", "players": []}
+        return {"name": "My team", "players": [], "il": []}
     data = json.loads(path.read_text(encoding="utf-8"))
     data.setdefault("name", "My team")
     data.setdefault("players", [])
+    data.setdefault("il", [])
     return data
 
 

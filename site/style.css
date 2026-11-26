@@ -136,3 +136,4 @@ td.player .tr-btn.on { background: var(--accent); border-color: var(--accent); c
 }
 [hidden] { display: none !important; }
 #sg-tol { width: 70px; }
+.il { display: inline-block; margin-left: 5px; padding: 0 4px; border-radius: 3px; font-size: 10px; font-weight: 600; line-height: 15px; color: rgb(var(--neg)); border: 1px solid rgba(var(--neg), 0.5); vertical-align: 1px; }

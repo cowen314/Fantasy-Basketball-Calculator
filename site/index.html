@@ -19,7 +19,7 @@
   </div>
   <p id="team-warn" class="warn" hidden></p>
   <div class="mini-wrap"><table id="team-tbl" class="mini"></table></div>
-  <p class="muted small">Sum of per-game z-scores across the roster. 0 is about an average team in the pool; green is a strength, red a weakness.</p>
+  <p class="muted small">Sum of per-game z-scores across the active roster (IL players left out). 0 is about an average team in the pool; green is a strength, red a weakness.</p>
 </section>
 
 <section id="trade-panel" class="panel">
@@ -86,7 +86,7 @@
     <li>The last-7-days window uses the season-to-date mean and SD, so its z-scores read as "playing at this level lately".</li>
     <li>A dot marks players in the season-to-date pool. Players below the minimum games don't count toward it, so the pool can leave out stars who have missed time.</li>
     <li>"Hide likely rostered" hides pool players and anyone in the top N by per-game value this season or last season. What's left are the likelier waiver candidates. It's an estimate, not your league's actual rosters.</li>
-    <li><b>My team</b> is hardcoded in <code>my_team.json</code> and marked with ★. Team totals add up each player's per-game z-scores; a player with no games in a window adds nothing there.</li>
+    <li><b>My team</b> is hardcoded in <code>my_team.json</code> and marked with ★. Team totals add up each active player's per-game z-scores; IL players are left out, and a player with no games in a window adds nothing there.</li>
     <li><b>Trade</b> shows how your team's category totals change: what you get minus what you give, per game. <b>Trade ideas</b> weight each category by how weak your team is in it (weakest 1.75×, strongest 0.25×) and keep swaps where the two players' values are within the max gap, so the other manager isn't obviously losing.</li>
     <li>Click a row for per-game stats. Data: basketball-reference.com.</li>
   </ul>

@@ -166,12 +166,19 @@ def main(argv=None):
         players.append(rec)
 
     team = roster.load(args.team)
-    my_ids, problems = roster.match(team["players"], {p["id"]: p["name"] for p in players})
-    mine = set(my_ids)
+    names = {p["id"]: p["name"] for p in players}
+    active_ids, problems = roster.match(team["players"], names)
+    il_ids, il_problems = roster.match(team["il"], names)
+    problems += [f"IL: {m}" for m in il_problems]
+    il_ids = [i for i in il_ids if i not in active_ids]
+    my_ids = active_ids + il_ids
     for p in players:
-        if p["id"] in mine:
+        if p["id"] in my_ids:
             p["mine"] = True
-    print(f"My team: matched {len(my_ids)} of {len(team['players'])} players")
+        if p["id"] in il_ids:
+            p["il"] = True
+    print(f"My team: matched {len(my_ids)} of {len(team['players']) + len(team['il'])} players "
+          f"({len(il_ids)} on IL)")
     for msg in problems:
         print(f"  WARNING: {msg}")
 
@@ -185,7 +192,7 @@ def main(argv=None):
         "stat_cols": PG_COLS,
         "windows": [{"key": k, "label": label} for k, label, _ in windows],
         "baselines": {"season": season_base.to_dict(), "prior": static_base},
-        "my_team": {"name": team["name"], "ids": my_ids, "unmatched": problems},
+        "my_team": {"name": team["name"], "ids": my_ids, "il": il_ids, "unmatched": problems},
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "players.json").write_text(
@@ -195,7 +202,7 @@ def main(argv=None):
     flat = []
     for p in players:
         r = {"player_id": p["id"], "name": p["name"], "team": p["team"], "pos": p["pos"],
-             "likely_rostered": p["rostered"], "mine": p.get("mine", False)}
+             "likely_rostered": p["rostered"], "mine": p.get("mine", False), "il": p.get("il", False)}
         for key, _, _ in windows:
             w = p.get(key)
             r[f"{key}_g"] = w["g"] if w else None

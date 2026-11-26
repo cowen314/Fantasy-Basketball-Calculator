@@ -21,14 +21,16 @@ League settings are in `config.json`: teams, roster spots, categories, minimum g
 Your fantasy roster is hardcoded in `my_team.json` until Yahoo Fantasy is connected:
 
 ```json
-{ "name": "My team", "players": ["Luka Doncic", "Jaren Jackson Jr.", "jacksja02"] }
+{ "name": "My team", "players": ["Luka Doncic", "Jaren Jackson Jr."], "il": ["jacksja02"] }
 ```
+
+`il` lists players on your injured list: they are starred and tradeable on the page, but left out of team totals.
 
 Names are matched to basketball-reference ignoring case, accents, punctuation and suffixes like Jr./III. Use the basketball-reference id (from the player's URL) if two players share a name. The build prints a warning for anything it can't match, and the page shows it too.
 
 On the page:
 - Your players are starred and highlighted, and **My team only** filters to them.
-- **My team** sums each category's per-game z-scores across the roster for each window, which shows the team's strengths and weaknesses.
+- **My team** sums each category's per-game z-scores across the active roster (IL players left out) for each window, which shows the team's strengths and weaknesses.
 - **Trade**: click ⇄ on any rows to build a trade (yours go on the give side, others on the get side). It shows the change to each category and to total value, per window.
 - **Trade ideas** lists 1-for-1 swaps where the two players' values are within a set gap and the weighted category gain is positive. Categories are weighted by how weak your team is in them (weakest 1.75×, strongest 0.25×). Targets are "likely rostered" players by default, or everyone.
 

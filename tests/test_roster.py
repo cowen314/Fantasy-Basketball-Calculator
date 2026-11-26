@@ -43,7 +43,7 @@ def test_match_drops_duplicates():
 
 
 def test_load_missing_and_present(tmp_path):
-    assert load(tmp_path / "nope.json") == {"name": "My team", "players": []}
+    assert load(tmp_path / "nope.json") == {"name": "My team", "players": [], "il": []}
     p = tmp_path / "t.json"
     p.write_text(json.dumps({"players": ["Luka Doncic"]}))
-    assert load(p) == {"name": "My team", "players": ["Luka Doncic"]}
+    assert load(p) == {"name": "My team", "players": ["Luka Doncic"], "il": []}

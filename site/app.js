@@ -132,7 +132,7 @@ function renderBody() {
     const btn = `<button type="button" class="tr-btn${inTrade ? " on" : ""}" data-trade="${p.id}" ` +
       `title="${inTrade ? "Remove from trade" : p.mine ? "Add to give side" : "Add to get side"}">⇄</button>`;
     html.push(`<tr class="main${p.mine ? " mine" : ""}" data-id="${p.id}"><td class="player" title="${p.name}">${btn}` +
-      `${p.mine ? '<span class="star" title="On my team">★</span>' : ""}${p.name}` +
+      `${p.mine ? '<span class="star" title="On my team">★</span>' : ""}${p.name}${p.il ? '<span class="il" title="On my IL, not counted in team totals">IL</span>' : ""}` +
       `<span class="sub">${p.team}${p.pos ? " · " + p.pos : ""}</span>${inPool ? '<span class="dot" title="In the season-to-date baseline pool"></span>' : ""}</td>`);
     for (const c of cols) {
       const v = getVal(p, c.key);
@@ -158,6 +158,8 @@ function render() {
 
 const cats = () => DATA.meta.categories;
 const myPlayers = () => DATA.meta.my_team.ids.map((id) => BY_ID.get(id)).filter(Boolean);
+// Players counted in team totals: my roster minus the injured list.
+const myActive = () => myPlayers().filter((p) => !p.il);
 const signed = (v, d = 2) => (v > 0 ? "+" : "") + fmt(v, d);
 
 function totalsScale(values) {
@@ -174,12 +176,13 @@ function headRow(first, extra = []) {
 
 function renderTeam() {
   const team = DATA.meta.my_team;
-  const mine = myPlayers();
+  const mine = myActive();
   $("team-panel").hidden = !team.ids.length && !team.unmatched.length;
   $("onlyMineWrap").hidden = !team.ids.length;
   $("suggest-panel").hidden = !team.ids.length;
   $("team-name").textContent = team.name;
-  $("team-note").textContent = `${team.ids.length} players`;
+  const nIl = team.ids.length - mine.length;
+  $("team-note").textContent = `${mine.length} active${nIl ? ` · ${nIl} on IL, not counted in totals` : ""}`;
   $("team-warn").hidden = !team.unmatched.length;
   $("team-warn").textContent = team.unmatched.length ? `Couldn't match: ${team.unmatched.join("; ")}` : "";
   const rows = DATA.meta.windows.map((w) => {
@@ -193,7 +196,7 @@ function renderTeam() {
 
 function chip(p, side) {
   const v = p.season ? fmt(p.season.value) : "–";
-  return `<span class="chip">${p.mine ? '<span class="star">★</span>' : ""}${esc(p.name)} <span class="v">${v}</span>` +
+  return `<span class="chip">${p.mine ? '<span class="star">★</span>' : ""}${esc(p.name)}${p.il ? ' <span class="il">IL</span>' : ""} <span class="v">${v}</span>` +
     `<button type="button" data-remove="${p.id}" data-side="${side}" title="Remove">×</button></span>`;
 }
 
@@ -208,8 +211,10 @@ function renderTrade() {
   if (!give.length && !get.length) return;
 
   const n = cats().length;
-  const mine = myPlayers();
+  const mine = myActive();
   const hasTeam = mine.length > 0;
+  // After the trade: active players I keep, plus everyone I get.
+  const kept = mine.filter((p) => !state.give.includes(p.id));
   const rows = [];
   for (const w of DATA.meta.windows) {
     const d = Trade.tradeDelta(give, get, w.key, n);
@@ -218,11 +223,12 @@ function renderTrade() {
       `<td style="${shade(d.value, scale)}">${signed(d.value)}</td></tr>`);
     if (hasTeam) {
       const before = Trade.teamTotals(mine, w.key, n);
-      const after = before.z.map((v, i) => v + d.z[i]);
+      const afterT = Trade.teamTotals([...kept, ...get], w.key, n);
+      const after = afterT.z;
       const s2 = totalsScale([...before.z, ...after]);
       rows.push(`<tr><td class="muted">&nbsp;&nbsp;team before → after</td>` +
         before.z.map((v, i) => `<td class="muted">${fmt(v, 1)} → <span style="${shade(after[i], s2)}">${fmt(after[i], 1)}</span></td>`).join("") +
-        `<td class="muted">${fmt(before.value, 1)} → ${fmt(before.value + d.value, 1)}</td></tr>`);
+        `<td class="muted">${fmt(before.value, 1)} → ${fmt(afterT.value, 1)}</td></tr>`);
     }
   }
   $("trade-tbl").innerHTML = `<thead>${headRow("Per game")}</thead><tbody>${rows.join("")}</tbody>`;
@@ -233,7 +239,7 @@ function renderSuggestions() {
   const win = $("sg-window").value;
   const n = cats().length;
   const mine = myPlayers();
-  const totals = Trade.teamTotals(mine, win, n);
+  const totals = Trade.teamTotals(myActive(), win, n);
   const weights = Trade.categoryWeights(totals.z);
   $("sg-weights").textContent = "Category weights: " +
     cats().map((c, i) => `${c} ${weights[i].toFixed(2)}×`).join(" · ");
@@ -252,7 +258,7 @@ function renderSuggestions() {
   }
   const scale = Math.max(totalsScale(ideas.flatMap((x) => x.delta)), 1);
   const rows = ideas.map((x) =>
-    `<tr><td class="who">${esc(x.give.name)} → <b>${esc(x.get.name)}</b> <span class="muted">${x.get.team}</span></td>` +
+    `<tr><td class="who">${esc(x.give.name)}${x.give.il ? ' <span class="il">IL</span>' : ""} → <b>${esc(x.get.name)}</b> <span class="muted">${x.get.team}</span></td>` +
     catCells(x.delta, scale, 2, true) +
     `<td>${signed(x.valueDiff)}</td><td class="strong">${fmt(x.gain)}</td>` +
     `<td><button type="button" data-try="${x.give.id}|${x.get.id}">Try</button></td></tr>`);
