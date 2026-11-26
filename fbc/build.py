@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from . import fetch
+from . import fetch, roster
 from .zscores import Baseline, find_baseline, per_game, score
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -102,6 +102,8 @@ def window_record(row: pd.Series, cats: list[str]) -> dict:
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", type=Path, default=ROOT / "config.json")
+    ap.add_argument("--team", type=Path, default=ROOT / "my_team.json",
+                    help="my hardcoded fantasy roster")
     ap.add_argument("--cache-dir", type=Path, help="cache fetched HTML here")
     ap.add_argument("--date", help="treat this as today (YYYY-MM-DD, US Eastern)")
     ap.add_argument("--rebuild-static", action="store_true")
@@ -163,6 +165,23 @@ def main(argv=None):
         rec.setdefault("pos", "")
         players.append(rec)
 
+    team = roster.load(args.team)
+    names = {p["id"]: p["name"] for p in players}
+    active_ids, problems = roster.match(team["players"], names)
+    il_ids, il_problems = roster.match(team["il"], names)
+    problems += [f"IL: {m}" for m in il_problems]
+    il_ids = [i for i in il_ids if i not in active_ids]
+    my_ids = active_ids + il_ids
+    for p in players:
+        if p["id"] in my_ids:
+            p["mine"] = True
+        if p["id"] in il_ids:
+            p["il"] = True
+    print(f"My team: matched {len(my_ids)} of {len(team['players']) + len(team['il'])} players "
+          f"({len(il_ids)} on IL)")
+    for msg in problems:
+        print(f"  WARNING: {msg}")
+
     meta = {
         "updated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "as_of": today.isoformat(),
@@ -173,6 +192,7 @@ def main(argv=None):
         "stat_cols": PG_COLS,
         "windows": [{"key": k, "label": label} for k, label, _ in windows],
         "baselines": {"season": season_base.to_dict(), "prior": static_base},
+        "my_team": {"name": team["name"], "ids": my_ids, "il": il_ids, "unmatched": problems},
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "players.json").write_text(
@@ -182,7 +202,7 @@ def main(argv=None):
     flat = []
     for p in players:
         r = {"player_id": p["id"], "name": p["name"], "team": p["team"], "pos": p["pos"],
-             "likely_rostered": p["rostered"]}
+             "likely_rostered": p["rostered"], "mine": p.get("mine", False), "il": p.get("il", False)}
         for key, _, _ in windows:
             w = p.get(key)
             r[f"{key}_g"] = w["g"] if w else None

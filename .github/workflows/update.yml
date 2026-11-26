@@ -28,6 +28,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt pytest
       - run: python -m pytest -q tests
+      - run: node --test tests/*.test.js
       - name: Build values
         env:
           # Optional: set repository secret HTTPS_PROXY (e.g. http://user:pass@host:port)
