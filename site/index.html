@@ -22,6 +22,29 @@
   <p class="muted small">Sum of per-game z-scores across the active roster (IL players left out). 0 is about an average team in the pool; green is a strength, red a weakness.</p>
 </section>
 
+<section class="controls">
+  <input id="search" type="search" placeholder="Search player" autocomplete="off">
+  <select id="team"><option value="">All teams</option></select>
+  <select id="pos">
+    <option value="">All positions</option>
+    <option>PG</option><option>SG</option><option>SF</option><option>PF</option><option>C</option>
+  </select>
+  <label class="field">Min G <input id="minG" type="number" min="0" value="0"></label>
+  <label class="check"><input id="hidePool" type="checkbox"> Hide likely rostered</label>
+  <label class="check" id="onlyMineWrap" hidden><input id="onlyMine" type="checkbox"> My team only</label>
+  <label class="field">Categories for
+    <select id="detail"></select>
+  </label>
+</section>
+
+<div class="table-wrap">
+  <table id="tbl">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+</div>
+<p id="count" class="muted small"></p>
+
 <section id="trade-panel" class="panel">
   <div class="panel-head">
     <h2>Trade</h2>
@@ -53,29 +76,6 @@
   <p id="sg-weights" class="muted small"></p>
   <div class="mini-wrap"><table id="sg-tbl" class="mini"></table></div>
 </section>
-
-<section class="controls">
-  <input id="search" type="search" placeholder="Search player" autocomplete="off">
-  <select id="team"><option value="">All teams</option></select>
-  <select id="pos">
-    <option value="">All positions</option>
-    <option>PG</option><option>SG</option><option>SF</option><option>PF</option><option>C</option>
-  </select>
-  <label class="field">Min G <input id="minG" type="number" min="0" value="0"></label>
-  <label class="check"><input id="hidePool" type="checkbox"> Hide likely rostered</label>
-  <label class="check" id="onlyMineWrap" hidden><input id="onlyMine" type="checkbox"> My team only</label>
-  <label class="field">Categories for
-    <select id="detail"></select>
-  </label>
-</section>
-
-<div class="table-wrap">
-  <table id="tbl">
-    <thead></thead>
-    <tbody></tbody>
-  </table>
-</div>
-<p id="count" class="muted small"></p>
 
 <details class="notes">
   <summary>How values are calculated</summary>
