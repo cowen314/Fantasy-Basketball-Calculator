@@ -10,6 +10,10 @@
 <header>
   <h1>Player Values</h1>
   <p id="meta" class="muted">Loading…</p>
+  <div class="punt-row">
+    <span class="muted small-inline" title="Punted categories are left out of value, rank, team totals and trade ideas">Punt</span>
+    <span id="punts" class="punts"></span>
+  </div>
 </header>
 
 <section id="team-panel" class="panel" hidden>
@@ -87,7 +91,8 @@
     <li>A dot marks players in the season-to-date pool. Players below the minimum games don't count toward it, so the pool can leave out stars who have missed time.</li>
     <li>"Hide likely rostered" hides pool players and anyone in the top N by per-game value this season or last season. What's left are the likelier waiver candidates. It's an estimate, not your league's actual rosters.</li>
     <li><b>My team</b> is hardcoded in <code>my_team.json</code> and marked with ★. Team totals add up each active player's per-game z-scores; IL players are left out, and a player with no games in a window adds nothing there.</li>
-    <li><b>Trade</b> shows how your team's category totals change: what you get minus what you give, per game. <b>Trade ideas</b> weight each category by how weak your team is in it (weakest 1.75×, strongest 0.25×) and keep swaps where the two players' values are within the max gap, so the other manager isn't obviously losing.</li>
+    <li><b>Punt</b> a category to leave it out of value, total, rank, team value and trade ideas. Its z-scores are still shown, dimmed. The z-scores and the baseline pool don't change, because the pool stands in for the league's rosters and the other managers aren't punting. For the same reason, the trade ideas' value gap (fairness to the other manager) still uses every category. Your choice is saved in this browser.</li>
+    <li><b>Trade</b> shows how your team's category totals change: what you get minus what you give, per game. <b>Trade ideas</b> weight each category by how weak your team is in it (weakest 1.75×, strongest 0.25×, punted 0×) and keep swaps where the two players' values are within the max gap, so the other manager isn't obviously losing.</li>
     <li>Click a row for per-game stats. Data: basketball-reference.com.</li>
   </ul>
 </details>
