@@ -94,3 +94,45 @@ tr.detail td { text-align: left; background: var(--head); white-space: normal; p
   th.player, td.player { min-width: 130px; max-width: 150px; }
   th, td { padding: 4px 6px; }
 }
+
+/* My team, trade builder, trade ideas */
+.panel {
+  margin: 16px 0 0; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+}
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.panel h2 { font-size: 16px; margin: 0; }
+.panel h3 { font-size: 12px; margin: 0 0 6px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.small-inline { font-size: 12px; }
+.warn { color: rgb(var(--neg)); font-size: 12px; margin: 8px 0 0; }
+.controls.tight { margin: 10px 0 4px; }
+button.link { font: inherit; font-size: 12px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; margin-left: auto; }
+
+.mini-wrap { overflow-x: auto; margin-top: 10px; }
+table.mini { width: auto; min-width: 100%; }
+table.mini th { position: static; cursor: default; background: var(--head); }
+table.mini th:first-child, table.mini td:first-child { text-align: left; }
+table.mini tr.total td { font-weight: 600; }
+table.mini td.who { white-space: normal; min-width: 160px; }
+table.mini button { font: inherit; font-size: 12px; padding: 2px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--accent); cursor: pointer; }
+
+.trade-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--head); border: 1px solid var(--border); font-size: 13px; }
+.chip button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+.chip .v { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+td.player .star { color: #c9971c; margin-right: 3px; }
+tbody tr.mine td.player { box-shadow: inset 3px 0 0 #c9971c; }
+tbody tr.mine td { background-image: linear-gradient(rgba(201, 151, 28, 0.08), rgba(201, 151, 28, 0.08)); }
+td.player .tr-btn {
+  font: inherit; font-size: 12px; line-height: 1; padding: 2px 5px; margin-right: 6px;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--muted); cursor: pointer;
+}
+td.player .tr-btn.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+
+@media (max-width: 600px) {
+  .trade-sides { grid-template-columns: 1fr; }
+}
+[hidden] { display: none !important; }
+#sg-tol { width: 70px; }

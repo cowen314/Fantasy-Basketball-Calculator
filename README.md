@@ -16,6 +16,22 @@ Daily z-score values for every NBA player in a head-to-head categories league, f
 
 League settings are in `config.json`: teams, roster spots, categories, minimum games, window length, and the static season. The static season uses basketball-reference's year, where 2026 means 2025-26. If you change the settings, the static season is recomputed automatically.
 
+## My team and trades
+
+Your fantasy roster is hardcoded in `my_team.json` until Yahoo Fantasy is connected:
+
+```json
+{ "name": "My team", "players": ["Luka Doncic", "Jaren Jackson Jr.", "jacksja02"] }
+```
+
+Names are matched to basketball-reference ignoring case, accents, punctuation and suffixes like Jr./III. Use the basketball-reference id (from the player's URL) if two players share a name. The build prints a warning for anything it can't match, and the page shows it too.
+
+On the page:
+- Your players are starred and highlighted, and **My team only** filters to them.
+- **My team** sums each category's per-game z-scores across the roster for each window, which shows the team's strengths and weaknesses.
+- **Trade**: click ⇄ on any rows to build a trade (yours go on the give side, others on the get side). It shows the change to each category and to total value, per window.
+- **Trade ideas** lists 1-for-1 swaps where the two players' values are within a set gap and the weighted category gain is positive. Categories are weighted by how weak your team is in them (weakest 1.75×, strongest 0.25×). Targets are "likely rostered" players by default, or everyone.
+
 ## Data source
 
 Data comes from [basketball-reference.com](https://www.basketball-reference.com): the season totals pages, plus the daily box-score pages for the last 7 days. stats.nba.com blocks cloud and CI IP ranges, so it isn't used. One build makes about 9 requests, spaced 3.5 s apart to stay under basketball-reference's rate limit.
@@ -27,6 +43,7 @@ pip install -r requirements.txt
 python -m fbc.build --cache-dir .cache   # writes site/data/players.json and players.csv
 python -m http.server -d site 8000       # open http://localhost:8000
 python -m pytest tests
+node --test tests/*.test.js              # trade math
 ```
 
 `--date YYYY-MM-DD` sets which day the build treats as today. `--rebuild-static` forces the prior season to be recomputed.
@@ -39,4 +56,4 @@ If basketball-reference ever blocks GitHub's runners, add a repository secret `H
 
 ## Not yet built
 
-Trade comparisons against a waiver-level player, punting categories, H2H matchup tuning, and schedule / playoff-week games.
+Live Yahoo rosters (trade targets are estimated for now), punting categories, H2H matchup tuning, and schedule / playoff-week games.

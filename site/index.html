@@ -12,6 +12,48 @@
   <p id="meta" class="muted">Loading…</p>
 </header>
 
+<section id="team-panel" class="panel" hidden>
+  <div class="panel-head">
+    <h2 id="team-name">My team</h2>
+    <span id="team-note" class="muted small-inline"></span>
+  </div>
+  <p id="team-warn" class="warn" hidden></p>
+  <div class="mini-wrap"><table id="team-tbl" class="mini"></table></div>
+  <p class="muted small">Sum of per-game z-scores across the roster. 0 is about an average team in the pool; green is a strength, red a weakness.</p>
+</section>
+
+<section id="trade-panel" class="panel">
+  <div class="panel-head">
+    <h2>Trade</h2>
+    <span class="muted small-inline">Use ⇄ on a row to add players. Your players go on the give side, everyone else on the get side.</span>
+    <button id="trade-clear" type="button" class="link" hidden>Clear</button>
+  </div>
+  <div class="trade-sides">
+    <div><h3>Give</h3><div id="trade-give" class="chips"><span class="muted">Nobody yet</span></div></div>
+    <div><h3>Get</h3><div id="trade-get" class="chips"><span class="muted">Nobody yet</span></div></div>
+  </div>
+  <div id="trade-result" class="mini-wrap" hidden><table id="trade-tbl" class="mini"></table></div>
+</section>
+
+<section id="suggest-panel" class="panel" hidden>
+  <div class="panel-head">
+    <h2>Trade ideas</h2>
+    <span class="muted small-inline">1-for-1 swaps of about equal value that help your weakest categories.</span>
+  </div>
+  <div class="controls tight">
+    <label class="field">Based on <select id="sg-window"></select></label>
+    <label class="field">Targets
+      <select id="sg-targets">
+        <option value="rostered">Likely rostered (trades)</option>
+        <option value="all">Everyone (incl. waivers)</option>
+      </select>
+    </label>
+    <label class="field">Max value gap <input id="sg-tol" type="number" min="0" step="0.25" value="1"></label>
+  </div>
+  <p id="sg-weights" class="muted small"></p>
+  <div class="mini-wrap"><table id="sg-tbl" class="mini"></table></div>
+</section>
+
 <section class="controls">
   <input id="search" type="search" placeholder="Search player" autocomplete="off">
   <select id="team"><option value="">All teams</option></select>
@@ -21,6 +63,7 @@
   </select>
   <label class="field">Min G <input id="minG" type="number" min="0" value="0"></label>
   <label class="check"><input id="hidePool" type="checkbox"> Hide likely rostered</label>
+  <label class="check" id="onlyMineWrap" hidden><input id="onlyMine" type="checkbox"> My team only</label>
   <label class="field">Categories for
     <select id="detail"></select>
   </label>
@@ -43,10 +86,13 @@
     <li>The last-7-days window uses the season-to-date mean and SD, so its z-scores read as "playing at this level lately".</li>
     <li>A dot marks players in the season-to-date pool. Players below the minimum games don't count toward it, so the pool can leave out stars who have missed time.</li>
     <li>"Hide likely rostered" hides pool players and anyone in the top N by per-game value this season or last season. What's left are the likelier waiver candidates. It's an estimate, not your league's actual rosters.</li>
+    <li><b>My team</b> is hardcoded in <code>my_team.json</code> and marked with ★. Team totals add up each player's per-game z-scores; a player with no games in a window adds nothing there.</li>
+    <li><b>Trade</b> shows how your team's category totals change: what you get minus what you give, per game. <b>Trade ideas</b> weight each category by how weak your team is in it (weakest 1.75×, strongest 0.25×) and keep swaps where the two players' values are within the max gap, so the other manager isn't obviously losing.</li>
     <li>Click a row for per-game stats. Data: basketball-reference.com.</li>
   </ul>
 </details>
 
+<script src="trade.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
